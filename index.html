@@ -5,456 +5,422 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Aplikasi Absensi Online</title>
   
-  <!-- CSS Frameworks & Icons -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- CSS Framework & Leaflet Maps -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Leaflet Map CSS/JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+  
   <style>
-    body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-    #map { height: 180px; width: 100%; border-radius: 0.75rem; }
-    #webcam { transform: scaleX(-1); object-fit: cover; }
+    body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-bottom: 70px; }
+    .card { border-radius: 15px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .btn-custom { border-radius: 10px; padding: 10px; }
+    #map { height: 180px; border-radius: 12px; margin-top: 10px; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; border-top: 1px solid #e0e0e0; display: flex; justify-content: space-around; padding: 8px 0; z-index: 1000; }
+    .bottom-nav button { background: none; border: none; color: #6c757d; font-size: 12px; display: flex; flex-direction: column; align-items: center; }
+    .bottom-nav button.active { color: #0d6efd; font-weight: bold; }
+    .bottom-nav i { font-size: 20px; margin-bottom: 2px; }
+    .fingerprint-btn { background: #0d6efd; color: white; width: 55px; height: 55px; border-radius: 50%; margin-top: -25px; box-shadow: 0 4px 10px rgba(13, 110, 253, 0.4); display: flex; align-items: center; justify-content: center; }
+    .fingerprint-btn i { font-size: 26px; color: white; }
+    #cameraView { width: 100%; border-radius: 12px; transform: scaleX(-1); }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 flex justify-center items-center min-h-screen">
+<body>
 
-  <!-- Container Mobile -->
-  <div class="w-full max-w-md bg-white min-h-screen shadow-lg flex flex-col relative pb-20">
-
-    <!-- LOGIN SCREEN -->
-    <div id="loginScreen" class="p-6 flex flex-col justify-center min-h-screen">
-      <div class="text-center mb-8">
-        <div class="w-20 h-20 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto text-3xl shadow-lg mb-3">
-          <i class="fa-solid fa-user-check"></i>
-        </div>
-        <h1 class="text-2xl font-bold text-slate-800">Presensi Online</h1>
-        <p class="text-xs text-slate-500 mt-1">Sistem Absensi Selfie & Geolocation</p>
-      </div>
-
-      <div class="space-y-4">
-        <div>
-          <label class="text-xs font-semibold text-slate-600 mb-1 block">NIK (16 Digit)</label>
-          <input type="text" id="loginNik" maxlength="16" placeholder="Masukkan NIK" class="w-full px-4 py-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
-        <div>
-          <label class="text-xs font-semibold text-slate-600 mb-1 block">Password</label>
-          <div class="relative">
-            <input type="password" id="loginPass" placeholder="Masukkan Password" class="w-full px-4 py-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <button type="button" onclick="togglePass('loginPass', 'eyeIconLogin')" class="absolute right-3 top-3 text-slate-400">
-              <i id="eyeIconLogin" class="fa-solid fa-eye"></i>
-            </button>
-          </div>
-        </div>
-        <button onclick="doLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold text-sm shadow-md transition-all">
-          Masuk
-        </button>
-      </div>
-    </div>
-
-    <!-- MAIN APP SCREEN -->
-    <div id="appScreen" class="hidden flex-1 flex flex-col">
-      <!-- Header -->
-      <div class="bg-blue-600 text-white p-5 rounded-b-2xl shadow-md">
-        <div class="flex justify-between items-center">
-          <div>
-            <h2 id="userNama" class="font-bold text-lg leading-tight">Nama User</h2>
-            <p id="userUnit" class="text-xs text-blue-100">Unit Kerja</p>
-          </div>
-          <div class="text-right">
-            <p id="clockTgl" class="text-xs font-medium opacity-90">00-00-0000</p>
-            <p id="clockJam" class="text-xl font-extrabold tracking-wider">00:00</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Content Area -->
-      <div class="p-4 flex-1 space-y-4">
-        
-        <!-- PAGE 1: HOME -->
-        <div id="pageHome" class="space-y-4">
-          <!-- Card Presensi -->
-          <div class="grid grid-cols-2 gap-3">
-            <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-center">
-              <p class="text-xs text-emerald-600 font-semibold mb-1"><i class="fa-solid fa-right-to-bracket mr-1"></i> Jam Masuk</p>
-              <p id="txtJamMasuk" class="text-lg font-bold text-emerald-800">--:--</p>
+  <div class="container py-3" id="app">
+    <!-- VIEW: LOGIN -->
+    <div id="loginSection" class="row justify-content-center mt-5">
+      <div class="col-md-5">
+        <div class="card p-4">
+          <h4 class="text-center fw-bold mb-3 text-primary"><i class="fa-solid me-2"></i>Absensi Online</h4>
+          <form id="loginForm">
+            <div class="mb-3">
+              <label class="form-label">NIK (16 Digit)</label>
+              <input type="number" id="loginNik" class="form-control" maxlength="16" placeholder="Masukkan NIK" required>
             </div>
-            <div class="bg-rose-50 border border-rose-200 p-3 rounded-xl text-center">
-              <p class="text-xs text-rose-600 font-semibold mb-1"><i class="fa-solid fa-right-from-bracket mr-1"></i> Jam Pulang</p>
-              <p id="txtJamPulang" class="text-lg font-bold text-rose-800">--:--</p>
-            </div>
-          </div>
-
-          <!-- Peta Lokasi -->
-          <div class="bg-white border border-slate-200 p-3 rounded-xl space-y-2 shadow-sm">
-            <div class="flex justify-between items-center text-xs text-slate-600 font-semibold">
-              <span><i class="fa-solid fa-location-dot text-red-500 mr-1"></i> Titik Koordinat GPS</span>
-              <span id="txtJarak" class="text-blue-600 font-bold">Menghitung...</span>
-            </div>
-            <div id="map"></div>
-            <p id="txtCoords" class="text-[10px] text-slate-400 text-center">Lat: - | Lng: -</p>
-          </div>
-        </div>
-
-        <!-- PAGE 2: REKAP -->
-        <div id="pageRekap" class="hidden space-y-3">
-          <h3 class="font-bold text-sm text-slate-700">Rekap Presensi</h3>
-          <div id="rekapContainer" class="space-y-2 text-xs">
-            <!-- Items Rekap Inserted via JS -->
-          </div>
-        </div>
-
-        <!-- PAGE 3: DATA PRIBADI -->
-        <div id="pageProfil" class="hidden space-y-3">
-          <h3 class="font-bold text-sm text-slate-700">Data Pribadi</h3>
-          <div class="bg-white p-4 rounded-xl border border-slate-200 text-sm space-y-2">
-            <div>
-              <p class="text-xs text-slate-400">NIK</p>
-              <p id="pNik" class="font-semibold text-slate-700">-</p>
-            </div>
-            <div>
-              <p class="text-xs text-slate-400">Nama Lengkap</p>
-              <p id="pNama" class="font-semibold text-slate-700">-</p>
-            </div>
-            <div>
-              <p class="text-xs text-slate-400">Unit Kerja</p>
-              <p id="pUnit" class="font-semibold text-slate-700">-</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- PAGE 4: SETTING -->
-        <div id="pageSetting" class="hidden space-y-3">
-          <h3 class="font-bold text-sm text-slate-700">Pengaturan Akun</h3>
-          <div class="space-y-3 text-xs">
-            <div>
-              <label class="block mb-1 text-slate-600 font-semibold">Nama Lengkap</label>
-              <input type="text" id="editNama" class="w-full p-2.5 border rounded-lg">
-            </div>
-            <div>
-              <label class="block mb-1 text-slate-600 font-semibold">Unit Kerja</label>
-              <input type="text" id="editUnit" class="w-full p-2.5 border rounded-lg">
-            </div>
-            <div>
-              <label class="block mb-1 text-slate-600 font-semibold">Password Baru (Opsional)</label>
-              <div class="relative">
-                <input type="password" id="editPass" class="w-full p-2.5 border rounded-lg">
-                <button type="button" onclick="togglePass('editPass', 'eyeIconEdit')" class="absolute right-3 top-2.5 text-slate-400">
-                  <i id="eyeIconEdit" class="fa-solid fa-eye"></i>
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <div class="input-group">
+                <input type="password" id="loginPass" class="form-control" placeholder="Masukkan Password" required>
+                <button class="btn btn-outline-secondary" type="button" onclick="togglePass('loginPass', 'eyeIconLogin')">
+                  <i class="fa-solid fa-eye" id="eyeIconLogin"></i>
                 </button>
               </div>
             </div>
-            <button onclick="saveProfile()" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold shadow-md">Simpan Perubahan</button>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- MODAL ABSENSI (CAMERA & SELFIE) -->
-      <div id="modalAbsen" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex flex-col justify-center items-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-2xl p-4 space-y-4">
-          <div class="flex justify-between items-center">
-            <h3 id="modalTitle" class="font-bold text-sm text-slate-800">Ambil Foto Selfie</h3>
-            <button onclick="closeCameraModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-          </div>
-          
-          <div class="relative w-full aspect-square bg-slate-900 rounded-xl overflow-hidden flex items-center justify-center">
-            <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
-            <canvas id="canvas" class="hidden"></canvas>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="triggerAbsen('masuk')" class="bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg font-semibold text-xs shadow-md">
-              <i class="fa-solid fa-right-to-bracket mr-1"></i> Absen Masuk
-            </button>
-            <button onclick="triggerAbsen('pulang')" class="bg-rose-600 hover:bg-rose-700 text-white py-2.5 rounded-lg font-semibold text-xs shadow-md">
-              <i class="fa-solid fa-right-from-bracket mr-1"></i> Absen Pulang
-            </button>
-          </div>
+            <button type="submit" class="btn btn-primary btn-custom w-100">Masuk</button>
+          </form>
         </div>
       </div>
-
-      <!-- BOTTOM NAVIGATION BAR -->
-      <div class="fixed bottom-0 max-w-md w-full bg-white border-t border-slate-200 flex justify-around items-center py-2 px-1 z-40">
-        <button onclick="switchTab('home')" class="nav-btn text-blue-600 flex flex-col items-center flex-1">
-          <i class="fa-solid fa-house text-base"></i>
-          <span class="text-[10px] mt-0.5">Utama</span>
-        </button>
-        <button onclick="switchTab('rekap')" class="nav-btn text-slate-400 flex flex-col items-center flex-1">
-          <i class="fa-solid fa-calendar-check text-base"></i>
-          <span class="text-[10px] mt-0.5">Rekap</span>
-        </button>
-        
-        <!-- Fingerprint Action Button -->
-        <button onclick="openCameraModal()" class="bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg -mt-5 border-4 border-white active:scale-95 transition-transform">
-          <i class="fa-solid fa-fingerprint text-2xl"></i>
-        </button>
-
-        <button onclick="switchTab('profil')" class="nav-btn text-slate-400 flex flex-col items-center flex-1">
-          <i class="fa-solid fa-user text-base"></i>
-          <span class="text-[10px] mt-0.5">Profil</span>
-        </button>
-        <button onclick="switchTab('setting')" class="nav-btn text-slate-400 flex flex-col items-center flex-1">
-          <i class="fa-solid fa-gear text-base"></i>
-          <span class="text-[10px] mt-0.5">Setting</span>
-        </button>
-        <button onclick="logout()" class="text-rose-500 flex flex-col items-center flex-1">
-          <i class="fa-solid fa-right-from-bracket text-base"></i>
-          <span class="text-[10px] mt-0.5">Keluar</span>
-        </button>
-      </div>
-
     </div>
 
+    <!-- VIEW: UTAMA -->
+    <div id="mainSection" style="display: none;">
+      <div class="card p-3 mb-3 bg-primary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="mb-0 fw-bold" id="userNama">-</h5>
+            <small id="userUnit">-</small>
+          </div>
+          <div class="text-end">
+            <div id="clockDisplay" class="fw-bold fs-5">00:00</div>
+            <small id="dateDisplay">-</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATUS ABSENSI -->
+      <div class="row g-2 mb-3">
+        <div class="col-6">
+          <div class="card p-3 text-center">
+            <small class="text-muted">Jam Masuk</small>
+            <h4 class="fw-bold text-success mb-0" id="txtJamMasuk">-</h4>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card p-3 text-center">
+            <small class="text-muted">Jam Pulang</small>
+            <h4 class="fw-bold text-danger mb-0" id="txtJamPulang">-</h4>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAPS KOORDINAT -->
+      <div class="card p-3 mb-3">
+        <small class="text-muted fw-bold">Lokasi GPS Saat Ini:</small>
+        <div id="map"></div>
+        <small class="text-muted mt-2" id="txtCoord">Mencari lokasi...</small>
+      </div>
+    </div>
+
+    <!-- VIEW: REKAP -->
+    <div id="rekapSection" style="display: none;">
+      <h5 class="fw-bold mb-3">Rekap Presensi</h5>
+      <div class="card p-3">
+        <div class="table-responsive">
+          <table class="table table-striped table-sm">
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Masuk</th>
+                <th>Pulang</th>
+              </tr>
+            </thead>
+            <tbody id="rekapBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: PROFIL / SETTING -->
+    <div id="profileSection" style="display: none;">
+      <h5 class="fw-bold mb-3">Pengaturan & Data Pribadi</h5>
+      <div class="card p-3">
+        <form id="profileForm">
+          <div class="mb-3">
+            <label class="form-label">NIK</label>
+            <input type="text" id="profNik" class="form-control" readonly>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Nama Lengkap</label>
+            <input type="text" id="profNama" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Unit Kerja</label>
+            <input type="text" id="profUnit" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Ubah Password</label>
+            <div class="input-group">
+              <input type="password" id="profPass" class="form-control" placeholder="Isi jika ingin merubah">
+              <button class="btn btn-outline-secondary" type="button" onclick="togglePass('profPass', 'eyeIconProf')">
+                <i class="fa-solid fa-eye" id="eyeIconProf"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-success btn-custom w-100">Simpan Perubahan</button>
+        </form>
+      </div>
+    </div>
   </div>
 
+  <!-- MODAL ABSEN (CAMERA) -->
+  <div class="modal fade" id="absenModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Ambil Selfie Presensi</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="stopCamera()"></button>
+        </div>
+        <div class="modal-body text-center">
+          <video id="cameraView" autoplay playsinline></video>
+          <canvas id="canvas" style="display:none;"></canvas>
+          <div class="d-flex justify-content-center gap-2 mt-3">
+            <button class="btn btn-success w-50" onclick="processAbsen('masuk')">
+              <i class="fa-solid fa-right-to-bracket me-1"></i> Absen Masuk
+            </button>
+            <button class="btn btn-danger w-50" onclick="processAbsen('pulang')">
+              <i class="fa-solid fa-right-from-bracket me-1"></i> Absen Pulang
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAVIGATION -->
+  <div class="bottom-nav" id="bottomNav" style="display: none;">
+    <button onclick="switchTab('main')" id="navMain" class="active">
+      <i class="fa-solid fa-house"></i>Utama
+    </button>
+    <button onclick="switchTab('rekap')" id="navRekap">
+      <i class="fa-solid fa-calendar-check"></i>Rekap
+    </button>
+    <button onclick="openAbsenModal()" class="fingerprint-btn">
+      <i class="fa-solid fa-fingerprint"></i>
+    </button>
+    <button onclick="switchTab('profile')" id="navProfile">
+      <i class="fa-solid fa-user-gear"></i>Setting
+    </button>
+    <button onclick="logout()">
+      <i class="fa-solid fa-right-from-bracket"></i>Keluar
+    </button>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // URL WEB APP APPS SCRIPT (Ganti dengan URL Deployment Anda)
-    const API_URL = "https://script.google.com/macros/s/AKfycbx61vxfuOADnwrwX2qoWte3ghgcQjNSrNoIXZdCDVuqAqV7WuNlvgg26vq1GchjKEmGyQ/exec";
+    // MASUKKAN URL DEPLOY APPS SCRIPT ANDA DI SINI
+    const SCRIPT_URL = "URL_APPS_SCRIPT_ANDA_DI_SINI";
 
     let currentUser = null;
-    let currentLat = null;
-    let currentLng = null;
-    let map = null;
-    let marker = null;
-    let videoStream = null;
+    let currentLat = 0, currentLng = 0;
+    let map, marker, videoStream;
+    let lastCheckedDate = "";
 
-    // Toggle Password Visibility
-    function togglePass(inputId, eyeId) {
-      const inp = document.getElementById(inputId);
-      const eye = document.getElementById(eyeId);
-      if (inp.type === "password") {
-        inp.type = "text";
-        eye.classList.replace("fa-eye", "fa-eye-slash");
+    // Inisialisasi saat dimuat
+    document.addEventListener("DOMContentLoaded", () => {
+      const savedUser = localStorage.getItem("user_absensi");
+      if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        loadMainView();
+      }
+    });
+
+    function togglePass(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (input.type === "password") {
+        input.type = "text";
+        icon.classList.replace("fa-eye", "fa-eye-slash");
       } else {
-        inp.type = "password";
-        eye.classList.replace("fa-eye-slash", "fa-eye");
+        input.type = "password";
+        icon.classList.replace("fa-eye-slash", "fa-eye");
       }
     }
 
-    // Login Function
-    async function doLogin() {
-      const nik = document.getElementById('loginNik').value.trim();
-      const pass = document.getElementById('loginPass').value.trim();
+    // HTTP POST Wrapper
+    async function apiPost(data) {
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+      return await res.json();
+    }
 
-      if (!nik || !pass) return alert("Isi NIK dan Password!");
+    // LOGIN
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const nik = document.getElementById("loginNik").value;
+      const password = document.getElementById("loginPass").value;
 
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'login', nik: nik, password: pass })
-      }).then(r => r.json());
-
-      if (res.status === 'success') {
+      const res = await apiPost({ action: "login", nik: nik, password: password });
+      if (res.success) {
         currentUser = res.user;
-        localStorage.setItem('user_absensi', JSON.stringify(currentUser));
-        initApp();
+        localStorage.setItem("user_absensi", JSON.stringify(currentUser));
+        loadMainView();
       } else {
         alert(res.message);
       }
+    });
+
+    function loadMainView() {
+      document.getElementById("loginSection").style.display = "none";
+      document.getElementById("mainSection").style.display = "block";
+      document.getElementById("bottomNav").style.display = "flex";
+
+      document.getElementById("userNama").innerText = currentUser.nama;
+      document.getElementById("userUnit").innerText = currentUser.unitKerja;
+
+      initGPS();
+      fetchTodayData();
+      startAutoRefresh();
     }
 
-    function initApp() {
-      if (!currentUser) return;
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('appScreen').classList.remove('hidden');
-
-      document.getElementById('userNama').innerText = currentUser.nama;
-      document.getElementById('userUnit').innerText = currentUser.unitKerja;
-      document.getElementById('pNik').innerText = currentUser.nik;
-      document.getElementById('pNama').innerText = currentUser.nama;
-      document.getElementById('pUnit').innerText = currentUser.unitKerja;
-      
-      document.getElementById('editNama').value = currentUser.nama;
-      document.getElementById('editUnit').value = currentUser.unitKerja;
-
-      initLocation();
-      fetchTodayStatus();
-      initAutoRefresh();
-    }
-
-    // Leaflet GPS Map Setup
-    function initLocation() {
+    // GPS REALTIME
+    function initGPS() {
       if (navigator.geolocation) {
-        navigator.geolocation.watchPosition(pos => {
-          currentLat = pos.coords.latitude;
-          currentLng = pos.coords.longitude;
-
-          document.getElementById('txtCoords').innerText = `Lat: ${currentLat.toFixed(5)} | Lng: ${currentLng.toFixed(5)}`;
-
-          if (!map) {
-            map = L.map('map').setView([currentLat, currentLng], 17);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            marker = L.marker([currentLat, currentLng]).addTo(map);
-          } else {
-            marker.setLatLng([currentLat, currentLng]);
-            map.panTo([currentLat, currentLng]);
-          }
-
-          // Hitung jarak ke lokasi target kantor
-          if (currentUser.targetLat && currentUser.targetLng) {
-            const dist = calculateDistance(currentLat, currentLng, currentUser.targetLat, currentUser.targetLng);
-            document.getElementById('txtJarak').innerText = `${Math.round(dist)} Meter dari titik target`;
-          }
-        }, err => console.log(err), { enableHighAccuracy: true });
+        navigator.geolocation.watchPosition(
+          (pos) => {
+            currentLat = pos.coords.latitude;
+            currentLng = pos.coords.longitude;
+            document.getElementById("txtCoord").innerText = `${currentLat.toFixed(6)}, ${currentLng.toFixed(6)}`;
+            
+            if (!map) {
+              map = L.map('map').setView([currentLat, currentLng], 16);
+              L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+              marker = L.marker([currentLat, currentLng]).addTo(map);
+            } else {
+              marker.setLatLng([currentLat, currentLng]);
+              map.panTo([currentLat, currentLng]);
+            }
+          },
+          (err) => alert("Harap aktifkan GPS perangkat Anda!"),
+          { enableHighAccuracy: true }
+        );
       }
     }
 
-    function calculateDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371e3;
-      const rad = Math.PI / 180;
-      const dLat = (lat2 - lat1) * rad;
-      const dLon = (lon2 - lon1) * rad;
-      const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon/2) * Math.sin(dLon/2);
-      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-    }
+    // FETCH DATA STATUS HARIAN DARI SERVER GOOGLE
+    async function fetchTodayData() {
+      const res = await apiPost({ action: "getTodayStatus", nik: currentUser.nik });
+      if (res.success) {
+        document.getElementById("dateDisplay").innerText = res.today;
+        document.getElementById("clockDisplay").innerText = res.serverTime;
+        document.getElementById("txtJamMasuk").innerText = res.jamMasuk;
+        document.getElementById("txtJamPulang").innerText = res.jamPulang;
 
-    // Ambil Data Jam Absen & Waktu Server Google
-    async function fetchTodayStatus() {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'getTodayStatus', nik: currentUser.nik })
-      }).then(r => r.json());
-
-      if (res.status === 'success') {
-        document.getElementById('clockTgl').innerText = res.serverDate;
-        document.getElementById('clockJam').innerText = res.serverTime;
-        document.getElementById('txtJamMasuk').innerText = res.jamMasuk;
-        document.getElementById('txtJamPulang').innerText = res.jamPulang;
+        // Cek Auto Refresh Hari Berikutnya
+        if (lastCheckedDate !== "" && lastCheckedDate !== res.today) {
+          location.reload(); 
+        }
+        lastCheckedDate = res.today;
       }
     }
 
-    // Auto Refresh Waktu/Tanggal Server Setiap 30 Detik
-    function initAutoRefresh() {
-      setInterval(() => {
-        fetchTodayStatus();
-      }, 30000);
+    function startAutoRefresh() {
+      setInterval(fetchTodayData, 30000); // Polling jam server & tanggal tiap 30 detik
     }
 
-    // Camera Modal Handlers
-    async function openCameraModal() {
-      document.getElementById('modalAbsen').classList.remove('hidden');
-      const video = document.getElementById('webcam');
+    // KAMERA & ABSENSI
+    async function openAbsenModal() {
+      const modal = new bootstrap.Modal(document.getElementById('absenModal'));
+      modal.show();
+
       try {
-        videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
-        video.srcObject = videoStream;
-      } catch (e) {
-        alert("Gagal membuka kamera selfie!");
+        videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+        document.getElementById("cameraView").srcObject = videoStream;
+      } catch (err) {
+        alert("Gagal mengakses kamera depan!");
       }
     }
 
-    function closeCameraModal() {
+    function stopCamera() {
       if (videoStream) {
         videoStream.getTracks().forEach(track => track.stop());
       }
-      document.getElementById('modalAbsen').classList.add('hidden');
     }
 
-    // Ambil Capture Selfie dan Kirim Absen
-    async function triggerAbsen(type) {
-      if (!currentLat || !currentLng) return alert("Lokasi GPS belum didapatkan!");
+    async function processAbsen(type) {
+      if (!currentLat || !currentLng) {
+        alert("Lokasi GPS belum didapatkan!");
+        return;
+      }
 
-      const video = document.getElementById('webcam');
-      const canvas = document.getElementById('canvas');
+      // Ambil foto selfie ke base64
+      const video = document.getElementById("cameraView");
+      const canvas = document.getElementById("canvas");
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageB64 = canvas.toDataURL('image/jpeg', 0.6);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0);
+      const photoBase64 = canvas.toDataURL("image/jpeg", 0.5);
 
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'doAbsen',
-          nik: currentUser.nik,
-          type: type,
-          lat: currentLat,
-          lng: currentLng,
-          imageB64: imageB64
-        })
-      }).then(r => r.json());
+      const modalEl = document.getElementById('absenModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
 
-      if (res.status === 'success') {
-        alert(res.message);
-        closeCameraModal();
-        fetchTodayStatus();
-      } else {
-        alert(res.message);
-      }
-    }
-
-    // Tab Navigation
-    function switchTab(tabName) {
-      ['Home', 'Rekap', 'Profil', 'Setting'].forEach(p => {
-        document.getElementById(`page${p}`).classList.add('hidden');
+      const res = await apiPost({
+        action: "absen",
+        nik: currentUser.nik,
+        type: type,
+        lat: currentLat,
+        lng: currentLng,
+        photo: photoBase64
       });
-      document.getElementById(`page${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.remove('hidden');
 
-      if (tabName === 'rekap') loadRekap();
-    }
-
-    // Rekap Handler
-    async function loadRekap() {
-      const container = document.getElementById('rekapContainer');
-      container.innerHTML = "Memuat rekap...";
-
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'getRekap', nik: currentUser.nik })
-      }).then(r => r.json());
-
-      if (res.status === 'success' && res.data.length > 0) {
-        container.innerHTML = res.data.map(item => `
-          <div class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center">
-            <div>
-              <p class="font-bold text-slate-700">${item[1]}</p>
-              <p class="text-[10px] text-slate-400">GPS: ${item[6]}</p>
-            </div>
-            <div class="text-right">
-              <span class="text-emerald-600 font-semibold">M: ${item[4]}</span> | 
-              <span class="text-rose-600 font-semibold">P: ${item[5]}</span>
-            </div>
-          </div>
-        `).join('');
+      if (res.success) {
+        alert(res.message);
+        stopCamera();
+        modal.hide();
+        fetchTodayData();
       } else {
-        container.innerHTML = "Belum ada rekap presensi.";
+        alert(res.message);
       }
     }
 
-    // Save Profile / Password
-    async function saveProfile() {
-      const nama = document.getElementById('editNama').value;
-      const unit = document.getElementById('editUnit').value;
-      const pass = document.getElementById('editPass').value;
+    // TABS SWITCHING
+    function switchTab(tab) {
+      document.getElementById("mainSection").style.display = tab === 'main' ? 'block' : 'none';
+      document.getElementById("rekapSection").style.display = tab === 'rekap' ? 'block' : 'none';
+      document.getElementById("profileSection").style.display = tab === 'profile' ? 'block' : 'none';
 
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'updateProfile', nik: currentUser.nik, nama: nama, unitKerja: unit, newPassword: pass })
-      }).then(r => r.json());
+      document.getElementById("navMain").classList.toggle("active", tab === 'main');
+      document.getElementById("navRekap").classList.toggle("active", tab === 'rekap');
+      document.getElementById("navProfile").classList.toggle("active", tab === 'profile');
 
-      if (res.status === 'success') {
-        alert("Data berhasil diubah!");
+      if (tab === 'rekap') loadRekap();
+      if (tab === 'profile') loadProfile();
+    }
+
+    async function loadRekap() {
+      const res = await apiPost({ action: "getRekap", nik: currentUser.nik });
+      if (res.success) {
+        const tbody = document.getElementById("rekapBody");
+        tbody.innerHTML = "";
+        res.data.forEach(row => {
+          tbody.innerHTML += `<tr>
+            <td>${row.tanggal}</td>
+            <td class="text-success fw-bold">${row.jamMasuk}</td>
+            <td class="text-danger fw-bold">${row.jamPulang}</td>
+          </tr>`;
+        });
+      }
+    }
+
+    function loadProfile() {
+      document.getElementById("profNik").value = currentUser.nik;
+      document.getElementById("profNama").value = currentUser.nama;
+      document.getElementById("profUnit").value = currentUser.unitKerja;
+    }
+
+    document.getElementById("profileForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const nama = document.getElementById("profNama").value;
+      const unit = document.getElementById("profUnit").value;
+      const pass = document.getElementById("profPass").value;
+
+      const res = await apiPost({
+        action: "updateProfile",
+        nik: currentUser.nik,
+        nama: nama,
+        unitKerja: unit,
+        password: pass
+      });
+
+      if (res.success) {
+        alert(res.message);
         currentUser.nama = nama;
         currentUser.unitKerja = unit;
-        localStorage.setItem('user_absensi', JSON.stringify(currentUser));
-        initApp();
+        localStorage.setItem("user_absensi", JSON.stringify(currentUser));
+        loadMainView();
+      } else {
+        alert(res.message);
       }
-    }
+    });
 
     function logout() {
-      localStorage.removeItem('user_absensi');
+      localStorage.removeItem("user_absensi");
       location.reload();
     }
-
-    // Auto Login Check
-    window.onload = () => {
-      const saved = localStorage.getItem('user_absensi');
-      if (saved) {
-        currentUser = JSON.parse(saved);
-        initApp();
-      }
-    };
   </script>
 </body>
 </html>
