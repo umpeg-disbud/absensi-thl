@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Aplikasi Absensi Online</title>
+  <title>Aplikasi Absensi Online & Event</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
   <style>
-    body { background-color: #f4f6f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding-bottom: 75px; }
+    body { background-color: #f4f6f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding-bottom: 75px; }
     .card { border-radius: 16px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
     #clock { font-size: 2.8rem; font-weight: 700; color: #0d6efd; letter-spacing: 1px; }
     #map { height: 180px; border-radius: 12px; margin-top: 10px; z-index: 1; }
@@ -18,15 +18,13 @@
     .nav-item-btn { text-align: center; color: #6c757d; font-size: 0.7rem; border: none; background: none; flex: 1; }
     .nav-item-btn.active { color: #0d6efd; font-weight: 600; }
     .nav-item-btn i { font-size: 1.2rem; display: block; margin-bottom: 2px; }
-    .btn-finger { width: 55px; height: 55px; border-radius: 50%; background: #0d6efd; color: #fff; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; border: 3px solid #fff; box-shadow: 0 4px 12px rgba(13,110,253,0.35); margin: -20px auto 0 auto; }
-    #cameraView, #cameraViewEvent { width: 100%; max-width: 300px; border-radius: 15px; transform: scaleX(-1); background-color: #000; }
-    .rekap-date { line-height: 1.2; font-weight: 600; }
-    .rekap-date small { display: block; font-weight: normal; color: #6c757d; font-size: 0.8rem; }
+    .btn-finger { width: 55px; height: 55px; border-radius: 50%; background: #0d6efd; color: #fff; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; border: 4px solid #fff; box-shadow: 0 4px 12px rgba(13,110,253,0.35); margin: -22px auto 0 auto; }
+    #cameraView { width: 100%; max-width: 320px; border-radius: 15px; transform: scaleX(-1); background-color: #000; }
   </style>
 </head>
 <body>
 
-  <!-- Toast Notification Container -->
+  <!-- TOAST NOTIFICATION CONTAINER -->
   <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 3000;">
     <div id="appToast" class="toast align-items-center text-white border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true">
       <div class="d-flex">
@@ -42,26 +40,32 @@
       <div class="col-12 col-md-5">
         <div class="card p-4 text-center">
           <h3 class="fw-bold mb-4 text-primary"><i class="bi bi-person-badge"></i> Absensi Online</h3>
+          
           <div class="form-floating mb-3 text-start">
-            <input type="text" class="form-control" id="loginNik" placeholder="NIK" maxlength="16" inputmode="numeric">
+            <input type="text" class="form-control" id="loginNik" placeholder="16 Digit NIK" maxlength="16" inputmode="numeric">
             <label for="loginNik">NIK (16 Teks Angka)</label>
           </div>
+
           <div class="input-group mb-3">
             <div class="form-floating flex-grow-1 text-start">
               <input type="password" class="form-control" id="loginPassword" placeholder="Password">
               <label for="loginPassword">Password</label>
             </div>
-            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('loginPassword', 'eyeIcon1')"><i class="bi bi-eye" id="eyeIcon1"></i></button>
+            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('loginPassword', 'eyeIcon1')">
+              <i class="bi bi-eye" id="eyeIcon1"></i>
+            </button>
           </div>
+
           <button class="btn btn-primary w-100 py-2 fs-5" onclick="login()">Masuk</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- CONTAINER UTAMA -->
+  <!-- CONTAINER UTAMA APLIKASI -->
   <div id="appPages" style="display: none;">
-    <!-- HOME PAGE -->
+    
+    <!-- HALAMAN HOME -->
     <div id="pageHome" class="container py-3">
       <div class="card p-3 mb-3 text-center">
         <h5 id="userName" class="fw-bold mb-0">-</h5>
@@ -85,17 +89,6 @@
         </div>
       </div>
 
-      <!-- MENU EVENT -->
-      <div class="card p-3 mb-3">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <small class="fw-bold text-secondary"><i class="bi bi-calendar-event text-primary"></i> Presensi Event Hari Ini</small>
-        </div>
-        <select id="eventSelect" class="form-select form-select-sm mb-2">
-          <option value="">-- Pilih Event (Opsional) --</option>
-        </select>
-        <button class="btn btn-outline-primary btn-sm w-100" onclick="openEventModal()"><i class="bi bi-camera"></i> Absen Event Terpilih</button>
-      </div>
-
       <div class="card p-3">
         <div class="d-flex justify-content-between align-items-center">
           <small class="fw-bold text-secondary"><i class="bi bi-geo-alt-fill text-danger"></i> Titik Koordinat</small>
@@ -105,7 +98,15 @@
       </div>
     </div>
 
-    <!-- REKAP PAGE -->
+    <!-- HALAMAN EVENT -->
+    <div id="pageEvent" class="container py-3" style="display:none;">
+      <h5 class="fw-bold mb-3"><i class="bi bi-calendar-event"></i> Presensi Event Hari Ini</h5>
+      <div id="eventListContainer">
+        <div class="card p-3 text-center text-muted">Memuat daftar event...</div>
+      </div>
+    </div>
+
+    <!-- HALAMAN REKAP -->
     <div id="pageRekap" class="container py-3" style="display:none;">
       <h5 class="fw-bold mb-3"><i class="bi bi-calendar-check"></i> Rekap Presensi</h5>
       <div class="card p-3">
@@ -124,7 +125,7 @@
       </div>
     </div>
 
-    <!-- SETTINGS PAGE -->
+    <!-- HALAMAN SETTINGS -->
     <div id="pageSettings" class="container py-3" style="display:none;">
       <h5 class="fw-bold mb-3"><i class="bi bi-gear"></i> Pengaturan Akun</h5>
       <div class="card p-3">
@@ -149,58 +150,76 @@
 
     <!-- BOTTOM NAVBAR -->
     <div class="bottom-nav">
-      <button class="nav-item-btn active" id="navHome" onclick="switchTab('home')"><i class="bi bi-house-door"></i> Home</button>
-      <button class="nav-item-btn" id="navRekap" onclick="switchTab('rekap')"><i class="bi bi-journal-text"></i> Rekap</button>
-      <button class="nav-item-btn" onclick="openAbsenModal()"><div class="btn-finger"><i class="bi bi-fingerprint"></i></div></button>
-      <button class="nav-item-btn" id="navSettings" onclick="switchTab('settings')"><i class="bi bi-gear"></i> Setting</button>
-      <button class="nav-item-btn text-danger" onclick="logout()"><i class="bi bi-box-arrow-right"></i> Keluar</button>
+      <button class="nav-item-btn active" id="navHome" onclick="switchTab('home')">
+        <i class="bi bi-house-door"></i> Home
+      </button>
+      <button class="nav-item-btn" id="navEvent" onclick="switchTab('event')">
+        <i class="bi bi-calendar-event"></i> Event
+      </button>
+      <button class="nav-item-btn" onclick="openAbsenModal()">
+        <div class="btn-finger"><i class="bi bi-fingerprint"></i></div>
+      </button>
+      <button class="nav-item-btn" id="navRekap" onclick="switchTab('rekap')">
+        <i class="bi bi-journal-text"></i> Rekap
+      </button>
+      <button class="nav-item-btn" id="navSettings" onclick="switchTab('settings')">
+        <i class="bi bi-gear"></i> Setting
+      </button>
+      <button class="nav-item-btn text-danger" onclick="logout()">
+        <i class="bi bi-box-arrow-right"></i> Keluar
+      </button>
     </div>
   </div>
 
-  <!-- MODAL ABSEN KANTOR -->
+  <!-- MODAL ABSENSI REGULER (Harian) -->
   <div class="modal fade" id="absenModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title fw-bold"><i class="bi bi-camera"></i> Selfie Verifikasi Kantor</h5>
+          <h5 class="modal-title fw-bold"><i class="bi bi-camera"></i> Absensi Harian (Selfie)</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="stopCamera()"></button>
         </div>
         <div class="modal-body text-center">
           <video id="cameraView" autoplay playsinline></video>
+          <canvas id="canvas" style="display:none;"></canvas>
           <div class="mt-3 d-flex justify-content-center gap-2">
-            <button class="btn btn-success w-50 py-2" onclick="doAbsen('masuk')"><i class="bi bi-box-arrow-in-right"></i> Masuk</button>
-            <button class="btn btn-danger w-50 py-2" onclick="doAbsen('pulang')"><i class="bi bi-box-arrow-right"></i> Pulang</button>
+            <button class="btn btn-success w-50 py-2" onclick="doAbsen('masuk')"><i class="bi bi-box-arrow-in-right"></i> Jam Masuk</button>
+            <button class="btn btn-danger w-50 py-2" onclick="doAbsen('pulang')"><i class="bi bi-box-arrow-right"></i> Jam Pulang</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL ABSEN EVENT -->
-  <div class="modal fade" id="eventModal" tabindex="-1" data-bs-backdrop="static">
+  <!-- MODAL ABSENSI EVENT -->
+  <div class="modal fade" id="eventAbsenModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title fw-bold"><i class="bi bi-camera-fill"></i> Selfie Verifikasi Event</h5>
+          <h5 class="modal-title fw-bold"><i class="bi bi-camera-fill"></i> Absen Event: <span id="modalEventName"></span></h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="stopCamera()"></button>
         </div>
         <div class="modal-body text-center">
-          <video id="cameraViewEvent" autoplay playsinline></video>
+          <video id="cameraViewEvent" autoplay playsinline style="width:100%; max-width:320px; border-radius:15px; transform: scaleX(-1); background:#000;"></video>
+          <input type="hidden" id="selectedEventId">
           <div class="mt-3">
-            <button class="btn btn-primary w-100 py-2" onclick="doAbsenEventSubmit()"><i class="bi bi-send-check"></i> Kirim Absen Event</button>
+            <button class="btn btn-primary w-100 py-2" onclick="submitEventAbsen()"><i class="bi bi-check-circle"></i> Kirim Absen Event</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- JS Dependencies -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxFjDvlnW3WzUucYqrdSwZJlLSiTahAP6x6GW0Fo-7YABcw2aKVvED_NKkZ7bYTu2s5yA/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx61vxfuOADnwrwX2qoWte3ghgcQjNSrNoIXZdCDVuqAqV7WuNlvgg26vq1GchjKEmGyQ/exec";
 
-    let currentLat = 0, currentLng = 0;
-    let map, marker, videoStream = null;
+    let currentLat = 0;
+    let currentLng = 0;
+    let map, marker;
+    let videoStream = null;
     let lastLoadedDate = "";
 
     function showToast(message, type = "success") {
@@ -228,7 +247,7 @@
         const response = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(data) });
         return await response.json();
       } catch (err) {
-        return { success: false, message: "Koneksi gagal: " + err.toString() };
+        return { success: false, message: "Koneksi server gagal: " + err.toString() };
       }
     }
 
@@ -237,7 +256,7 @@
       const password = document.getElementById("loginPassword").value;
       if (!nik || !password) return showToast("NIK dan Password wajib diisi!", "error");
 
-      const res = await apiPost({ action: "login", nik, password });
+      const res = await apiPost({ action: "login", nik: nik, password: password });
       if (res.success) {
         localStorage.setItem("user_nik", nik);
         showToast("Login Berhasil!", "success");
@@ -257,14 +276,14 @@
       document.getElementById("appPages").style.display = "block";
       initGPS();
       loadDashboard();
-      loadEvents();
       setInterval(loadDashboard, 1000);
     }
 
     async function loadDashboard() {
       const nik = localStorage.getItem("user_nik");
       if (!nik) return;
-      const res = await apiPost({ action: "getDashboard", nik });
+
+      const res = await apiPost({ action: "getDashboard", nik: nik });
       if (res.success) {
         document.getElementById("userName").innerText = res.user.nama;
         document.getElementById("userUnit").innerText = res.user.unitKerja;
@@ -273,21 +292,8 @@
         document.getElementById("jamMasukVal").innerText = res.jamMasuk;
         document.getElementById("jamPulangVal").innerText = res.jamPulang;
 
-        if (lastLoadedDate !== "" && lastLoadedDate !== res.serverDateRaw) {
-          location.reload();
-        }
-        lastLoadedDate = res.serverDateRaw;
-      }
-    }
-
-    async function loadEvents() {
-      const res = await apiPost({ action: "getEventList" });
-      if (res.success) {
-        const select = document.getElementById("eventSelect");
-        select.innerHTML = '<option value="">-- Pilih Event (Opsional) --</option>';
-        res.events.forEach(ev => {
-          select.innerHTML += `<option value="${ev.id}">${ev.nama} (Radius ${ev.radius}m)</option>`;
-        });
+        if (lastLoadedDate !== "" && lastLoadedDate !== res.serverDate) location.reload();
+        lastLoadedDate = res.serverDate;
       }
     }
 
@@ -301,8 +307,8 @@
             document.getElementById("gpsStatus").className = "badge bg-success";
             updateMap(currentLat, currentLng);
           },
-          () => {
-            document.getElementById("gpsStatus").innerText = "GPS Mati";
+          (err) => {
+            document.getElementById("gpsStatus").innerText = "GPS Mati/Gagal";
             document.getElementById("gpsStatus").className = "badge bg-danger";
           },
           { enableHighAccuracy: true }
@@ -323,13 +329,42 @@
 
     function switchTab(tab) {
       document.getElementById("pageHome").style.display = tab === 'home' ? 'block' : 'none';
+      document.getElementById("pageEvent").style.display = tab === 'event' ? 'block' : 'none';
       document.getElementById("pageRekap").style.display = tab === 'rekap' ? 'block' : 'none';
       document.getElementById("pageSettings").style.display = tab === 'settings' ? 'block' : 'none';
 
       document.querySelectorAll('.bottom-nav .nav-item-btn').forEach(b => b.classList.remove('active'));
       if (tab === 'home') document.getElementById('navHome').classList.add('active');
-      if (tab === 'rekap') { document.getElementById('navRekap').classList.add('active'); loadRekap(); }
+      if (tab === 'event') {
+        document.getElementById('navEvent').classList.add('active');
+        loadEvents();
+      }
+      if (tab === 'rekap') {
+        document.getElementById('navRekap').classList.add('active');
+        loadRekap();
+      }
       if (tab === 'settings') document.getElementById('navSettings').classList.add('active');
+    }
+
+    async function loadEvents() {
+      const res = await apiPost({ action: "getEvents" });
+      const container = document.getElementById("eventListContainer");
+      container.innerHTML = "";
+
+      if (res.success && res.events.length > 0) {
+        res.events.forEach(ev => {
+          container.innerHTML += `
+            <div class="card p-3 mb-2 border-start border-4 border-primary">
+              <h5 class="fw-bold mb-1">${ev.namaEvent}</h5>
+              <small class="text-muted"><i class="bi bi-calendar"></i> ${ev.tanggal} | Radius: ${ev.radius}m</small>
+              <button class="btn btn-outline-primary btn-sm mt-2" onclick="openEventModal('${ev.id}', '${ev.namaEvent}')">
+                <i class="bi bi-camera"></i> Absen Event Ini
+              </button>
+            </div>`;
+        });
+      } else {
+        container.innerHTML = `<div class="card p-3 text-center text-muted">Tidak ada event aktif hari ini.</div>`;
+      }
     }
 
     async function loadRekap() {
@@ -338,18 +373,12 @@
         const tbody = document.getElementById("rekapTableBody");
         tbody.innerHTML = "";
         res.rekap.forEach(r => {
-          // Format Tanggal 2 Baris: [Nama Hari] di atas, [Tanggal] di bawah
-          let dateParts = r.tanggal.split(",");
-          let dayName = dateParts[0] || r.tanggal;
-          let dateNum = dateParts[1] ? dateParts[1].trim() : "";
+          // Tanggal sudah diformat 2 baris dari backend, kita pisahkan dengan <br>
+          const tglParts = r.tanggal.split(", ");
+          const tglFormatted = tglParts.length === 2 ? `${tglParts[0]}<br><small class="text-muted">${tglParts[1]}</small>` : r.tanggal;
 
           tbody.innerHTML += `<tr>
-            <td>
-              <div class="rekap-date">
-                ${dayName}
-                <small>${dateNum}</small>
-              </div>
-            </td>
+            <td>${tglFormatted}</td>
             <td class="text-success font-monospace">${r.jamMasuk}</td>
             <td class="text-danger font-monospace">${r.jamPulang}</td>
           </tr>`;
@@ -357,30 +386,8 @@
       }
     }
 
-    function openAbsenModal() {
-      new bootstrap.Modal(document.getElementById('absenModal')).show();
-      startCamera("cameraView");
-    }
-
-    function openEventModal() {
-      const eventId = document.getElementById("eventSelect").value;
-      if (!eventId) return showToast("Pilih event terlebih dahulu dari daftar!", "error");
-      new bootstrap.Modal(document.getElementById('eventModal')).show();
-      startCamera("cameraViewEvent");
-    }
-
-    function startCamera(elementId) {
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
-        .then(stream => { videoStream = stream; document.getElementById(elementId).srcObject = stream; })
-        .catch(err => showToast("Kamera gagal diakses: " + err.message, "error"));
-    }
-
-    function stopCamera() {
-      if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); }
-    }
-
-    function captureImageToBase64(videoId) {
-      const video = document.getElementById(videoId);
+    function captureImage(videoElementId) {
+      const video = document.getElementById(videoElementId);
       const canvas = document.createElement('canvas');
       canvas.width = video.videoWidth || 320;
       canvas.height = video.videoHeight || 240;
@@ -389,35 +396,72 @@
       return canvas.toDataURL('image/jpeg', 0.8);
     }
 
-    async function doAbsen(type) {
-      if (currentLat === 0) return showToast("GPS belum terdeteksi!", "error");
-      const imgBase64 = captureImageToBase64("cameraView");
+    function openAbsenModal() {
+      new bootstrap.Modal(document.getElementById('absenModal')).show();
+      startCamera("cameraView");
+    }
 
-      const res = await apiPost({ action: "absen", nik: localStorage.getItem("user_nik"), type, lat: currentLat, lng: currentLng, image: imgBase64 });
-      if (res.success) {
-        showToast(res.message, "success");
-        stopCamera();
-        bootstrap.Modal.getInstance(document.getElementById('absenModal')).hide();
-        loadDashboard();
-      } else {
-        showToast(res.message, "error");
+    function openEventModal(id, name) {
+      document.getElementById("selectedEventId").value = id;
+      document.getElementById("modalEventName").innerText = name;
+      new bootstrap.Modal(document.getElementById('eventAbsenModal')).show();
+      startCamera("cameraViewEvent");
+    }
+
+    function startCamera(elementId) {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+        .then((stream) => {
+          videoStream = stream;
+          document.getElementById(elementId).srcObject = stream;
+        })
+        .catch((err) => showToast("Kamera gagal diakses: " + err.message, "error"));
+    }
+
+    function stopCamera() {
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
       }
     }
 
-    async function doAbsenEventSubmit() {
-      const eventId = document.getElementById("eventSelect").value;
-      if (!eventId) return showToast("Pilih event terlebih dahulu!", "error");
-      if (currentLat === 0) return showToast("GPS belum terdeteksi!", "error");
+    async function doAbsen(type) {
+      if (currentLat === 0 && currentLng === 0) return showToast("GPS belum terdeteksi!", "error");
+      const imageBase64 = captureImage("cameraView");
 
-      const imgBase64 = captureImageToBase64("cameraViewEvent");
-      const res = await apiPost({ action: "absenEvent", nik: localStorage.getItem("user_nik"), eventId, lat: currentLat, lng: currentLng, image: imgBase64 });
+      const res = await apiPost({
+        action: "absen",
+        nik: localStorage.getItem("user_nik"),
+        type: type,
+        lat: currentLat,
+        lng: currentLng,
+        image: imageBase64
+      });
 
+      showToast(res.message, res.success ? "success" : "error");
       if (res.success) {
-        showToast(res.message, "success");
         stopCamera();
-        bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
-      } else {
-        showToast(res.message, "error");
+        bootstrap.Modal.getInstance(document.getElementById('absenModal')).hide();
+        loadDashboard();
+      }
+    }
+
+    async function submitEventAbsen() {
+      if (currentLat === 0 && currentLng === 0) return showToast("GPS belum terdeteksi!", "error");
+      const eventId = document.getElementById("selectedEventId").value;
+      const imageBase64 = captureImage("cameraViewEvent");
+
+      const res = await apiPost({
+        action: "absenEvent",
+        nik: localStorage.getItem("user_nik"),
+        eventId: eventId,
+        lat: currentLat,
+        lng: currentLng,
+        image: imageBase64
+      });
+
+      showToast(res.message, res.success ? "success" : "error");
+      if (res.success) {
+        stopCamera();
+        bootstrap.Modal.getInstance(document.getElementById('eventAbsenModal')).hide();
       }
     }
 
@@ -426,17 +470,23 @@
       const newPass = document.getElementById("newPass").value;
       if (!oldPass || !newPass) return showToast("Semua kolom password wajib diisi!", "error");
 
-      const res = await apiPost({ action: "changePassword", nik: localStorage.getItem("user_nik"), oldPassword: oldPass, newPassword: newPass });
+      const res = await apiPost({
+        action: "changePassword",
+        nik: localStorage.getItem("user_nik"),
+        oldPassword: oldPass,
+        newPassword: newPass
+      });
+
+      showToast(res.message, res.success ? "success" : "error");
       if (res.success) {
-        showToast(res.message, "success");
         document.getElementById("oldPass").value = "";
         document.getElementById("newPass").value = "";
-      } else {
-        showToast(res.message, "error");
       }
     }
 
-    window.onload = () => { if (localStorage.getItem("user_nik")) initApp(); };
+    window.onload = () => {
+      if (localStorage.getItem("user_nik")) initApp();
+    };
   </script>
 </body>
 </html>
