@@ -64,7 +64,7 @@
 
   <!-- CONTAINER UTAMA -->
   <div id="appPages" style="display: none;">
-    <!-- HEADER BAR KELUAR (EXIT) DI POJOK KANAN ATAS -->
+    <!-- HEADER EXIT DI POJOK KANAN ATAS -->
     <div class="container py-2 text-end">
       <button class="btn btn-sm btn-outline-danger px-3 py-1 fw-semibold" onclick="logout()">
         <i class="bi bi-box-arrow-right"></i> Exit
@@ -129,10 +129,10 @@
       <div class="card p-3 mb-3">
         <label for="eventSelect" class="form-label fw-semibold">Pilih Event Aktif</label>
         <select class="form-select mb-3" id="eventSelect" onchange="updateEventInfo()"></select>
-        
-        <!-- Info Detail & Status Kehadiran Event -->
         <div id="eventDetailInfo" class="mb-3 text-muted small"></div>
-        <div id="eventAttendanceDisplay" class="mb-3"></div>
+        
+        <!-- Data Kehadiran di Bawah Jadwal Event -->
+        <div id="eventAttendanceStatus" class="mb-3"></div>
 
         <button class="btn btn-success w-100" id="btnAbsenEvent" onclick="openEventModal()"><i class="bi bi-camera"></i> Ambil Foto & Absen Event</button>
       </div>
@@ -165,7 +165,7 @@
       </div>
     </div>
 
-    <!-- BOTTOM NAVBAR -->
+    <!-- BOTTOM NAVBAR (Sidik Jari Center) -->
     <div class="bottom-nav">
       <button class="nav-item-btn active" id="navHome" onclick="switchTab('home')"><i class="bi bi-house-door"></i>Home</button>
       <button class="nav-item-btn" id="navRekap" onclick="switchTab('rekap')"><i class="bi bi-journal-text"></i>Rekap</button>
@@ -362,7 +362,8 @@
     }
 
     async function loadEventList() {
-      const res = await apiPost({ action: "getEventList", nik: localStorage.getItem("user_nik") });
+      const nik = localStorage.getItem("user_nik");
+      const res = await apiPost({ action: "getEventList", nik });
       if (res.success) {
         eventListCache = res.events;
         const select = document.getElementById("eventSelect");
@@ -370,7 +371,7 @@
         if (eventListCache.length === 0) {
           select.innerHTML = `<option value="">Tidak ada event untuk Anda</option>`;
           document.getElementById("eventDetailInfo").innerText = "";
-          document.getElementById("eventAttendanceDisplay").innerHTML = "";
+          document.getElementById("eventAttendanceStatus").innerHTML = "";
           document.getElementById("btnAbsenEvent").style.display = "none";
         } else {
           document.getElementById("btnAbsenEvent").style.display = "block";
@@ -385,27 +386,32 @@
     function updateEventInfo() {
       const eventId = document.getElementById("eventSelect").value;
       const ev = eventListCache.find(e => String(e.id) === String(eventId));
-      const attDiv = document.getElementById("eventAttendanceDisplay");
-      
+      const infoDiv = document.getElementById("eventDetailInfo");
+      const statusDiv = document.getElementById("eventAttendanceStatus");
+      const btnAbsen = document.getElementById("btnAbsenEvent");
+
       if (ev) {
-        document.getElementById("eventDetailInfo").innerHTML = `<i class="bi bi-calendar-date"></i> Tanggal Event: <strong>${ev.tanggal}</strong><br><i class="bi bi-geo-alt"></i> Koordinat: ${ev.lat}, ${ev.lng} (Radius: ${ev.radius}m)`;
+        infoDiv.innerHTML = `<i class="bi bi-calendar-date"></i> Tanggal Event: <strong>${ev.tanggal}</strong><br><i class="bi bi-geo-alt"></i> Koordinat: ${ev.lat}, ${ev.lng} (Radius: ${ev.radius}m)`;
         
-        if (ev.attendance) {
-          attDiv.innerHTML = `
-            <div class="alert alert-success p-2 small mb-0">
-              <i class="bi bi-check-circle-fill"></i> <strong>Sudah Absen Event</strong><br>
-              Waktu: ${ev.attendance.waktuAbsen}<br>
-              Koordinat: ${ev.attendance.koordinat}<br>
-              <a href="${ev.attendance.foto}" target="_blank" class="alert-link">Lihat Foto Selfie</a>
+        if (ev.kehadiran) {
+          statusDiv.innerHTML = `
+            <div class="alert alert-success py-2 mb-0 small">
+              <i class="bi bi-check-circle-fill"></i> <strong>Sudah Hadir</strong><br>
+              Waktu: ${ev.kehadiran.waktuAbsen}<br>
+              Koordinat: ${ev.kehadiran.koordinat}<br>
+              <a href="${ev.kehadiran.foto}" target="_blank" class="alert-link">Lihat Foto Selfie</a>
             </div>`;
-          document.getElementById("btnAbsenEvent").style.display = "none";
+          btnAbsen.style.display = "none";
         } else {
-          attDiv.innerHTML = `<div class="alert alert-warning p-2 small mb-0"><i class="bi bi-exclamation-circle"></i> Belum melakukan presensi event ini.</div>`;
-          document.getElementById("btnAbsenEvent").style.display = "block";
+          statusDiv.innerHTML = `
+            <div class="alert alert-warning py-2 mb-0 small">
+              <i class="bi bi-exclamation-circle"></i> Belum melakukan presensi event ini.
+            </div>`;
+          btnAbsen.style.display = "block";
         }
       } else {
-        document.getElementById("eventDetailInfo").innerText = "";
-        attDiv.innerHTML = "";
+        infoDiv.innerText = "";
+        statusDiv.innerHTML = "";
       }
     }
 
@@ -486,7 +492,7 @@
       if (res.success) {
         stopCamera();
         bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
-        loadEventList(); // Refresh data event & tampilkan status kehadiran
+        loadEventList();
       }
     }
 
