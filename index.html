@@ -15,7 +15,6 @@
     #clock { font-size: 2.8rem; font-weight: 700; color: #0d6efd; letter-spacing: 1px; }
     #map { height: 180px; border-radius: 12px; margin-top: 10px; z-index: 1; }
     
-    /* Navbar Bawah dengan Tombol Sidik Jari di Tengah */
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; border-top: 1px solid #e0e0e0; display: flex; justify-content: space-around; align-items: center; padding: 6px 0; z-index: 1000; }
     .nav-item-btn { text-align: center; color: #6c757d; font-size: 0.7rem; border: none; background: none; flex: 1; }
     .nav-item-btn.active { color: #0d6efd; font-weight: 600; }
@@ -130,8 +129,12 @@
       <div class="card p-3 mb-3">
         <label for="eventSelect" class="form-label fw-semibold">Pilih Event Aktif</label>
         <select class="form-select mb-3" id="eventSelect" onchange="updateEventInfo()"></select>
+        
+        <!-- Info Detail & Status Kehadiran Event -->
         <div id="eventDetailInfo" class="mb-3 text-muted small"></div>
-        <button class="btn btn-success w-100" onclick="openEventModal()"><i class="bi bi-camera"></i> Ambil Foto & Absen Event</button>
+        <div id="eventAttendanceDisplay" class="mb-3"></div>
+
+        <button class="btn btn-success w-100" id="btnAbsenEvent" onclick="openEventModal()"><i class="bi bi-camera"></i> Ambil Foto & Absen Event</button>
       </div>
     </div>
 
@@ -162,12 +165,11 @@
       </div>
     </div>
 
-    <!-- BOTTOM NAVBAR (Tombol Sidik Jari di Tengah) -->
+    <!-- BOTTOM NAVBAR -->
     <div class="bottom-nav">
       <button class="nav-item-btn active" id="navHome" onclick="switchTab('home')"><i class="bi bi-house-door"></i>Home</button>
       <button class="nav-item-btn" id="navRekap" onclick="switchTab('rekap')"><i class="bi bi-journal-text"></i>Rekap</button>
       
-      <!-- Tombol Sidik Jari Center -->
       <button class="nav-item-btn" onclick="openAbsenModal()" style="flex: 0 0 auto;">
         <div class="btn-finger"><i class="bi bi-fingerprint"></i></div>
       </button>
@@ -206,7 +208,6 @@
         </div>
         <div class="modal-body text-center">
           <video id="cameraViewEvent" autoplay playsinline></video>
-          <!-- Waktu Tanggal Hadir Event Format String -->
           <div id="eventTimestampDisplay" class="mt-2 text-primary fw-bold small">Waktu Hadir: -</div>
           <div class="mt-3">
             <button class="btn btn-primary w-100 py-2" onclick="submitEventAbsen()"><i class="bi bi-check-circle"></i> Kirim Presensi Event</button>
@@ -361,15 +362,18 @@
     }
 
     async function loadEventList() {
-      const res = await apiPost({ action: "getEventList" });
+      const res = await apiPost({ action: "getEventList", nik: localStorage.getItem("user_nik") });
       if (res.success) {
         eventListCache = res.events;
         const select = document.getElementById("eventSelect");
         select.innerHTML = "";
         if (eventListCache.length === 0) {
-          select.innerHTML = `<option value="">Tidak ada event aktif</option>`;
+          select.innerHTML = `<option value="">Tidak ada event untuk Anda</option>`;
           document.getElementById("eventDetailInfo").innerText = "";
+          document.getElementById("eventAttendanceDisplay").innerHTML = "";
+          document.getElementById("btnAbsenEvent").style.display = "none";
         } else {
+          document.getElementById("btnAbsenEvent").style.display = "block";
           eventListCache.forEach(ev => {
             select.innerHTML += `<option value="${ev.id}">${ev.namaEvent} (${ev.tanggal})</option>`;
           });
@@ -381,10 +385,27 @@
     function updateEventInfo() {
       const eventId = document.getElementById("eventSelect").value;
       const ev = eventListCache.find(e => String(e.id) === String(eventId));
+      const attDiv = document.getElementById("eventAttendanceDisplay");
+      
       if (ev) {
         document.getElementById("eventDetailInfo").innerHTML = `<i class="bi bi-calendar-date"></i> Tanggal Event: <strong>${ev.tanggal}</strong><br><i class="bi bi-geo-alt"></i> Koordinat: ${ev.lat}, ${ev.lng} (Radius: ${ev.radius}m)`;
+        
+        if (ev.attendance) {
+          attDiv.innerHTML = `
+            <div class="alert alert-success p-2 small mb-0">
+              <i class="bi bi-check-circle-fill"></i> <strong>Sudah Absen Event</strong><br>
+              Waktu: ${ev.attendance.waktuAbsen}<br>
+              Koordinat: ${ev.attendance.koordinat}<br>
+              <a href="${ev.attendance.foto}" target="_blank" class="alert-link">Lihat Foto Selfie</a>
+            </div>`;
+          document.getElementById("btnAbsenEvent").style.display = "none";
+        } else {
+          attDiv.innerHTML = `<div class="alert alert-warning p-2 small mb-0"><i class="bi bi-exclamation-circle"></i> Belum melakukan presensi event ini.</div>`;
+          document.getElementById("btnAbsenEvent").style.display = "block";
+        }
       } else {
         document.getElementById("eventDetailInfo").innerText = "";
+        attDiv.innerHTML = "";
       }
     }
 
@@ -400,7 +421,6 @@
       new bootstrap.Modal(document.getElementById('eventModal')).show();
       startCamera("cameraViewEvent");
 
-      // Menampilkan waktu hadir string saat ini di bawah jadwal event
       const now = new Date();
       const formattedNow = String(now.getDate()).padStart(2,'0') + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + now.getFullYear() + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
       document.getElementById("eventTimestampDisplay").innerText = "Waktu Hadir: " + formattedNow;
@@ -466,6 +486,7 @@
       if (res.success) {
         stopCamera();
         bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+        loadEventList(); // Refresh data event & tampilkan status kehadiran
       }
     }
 
