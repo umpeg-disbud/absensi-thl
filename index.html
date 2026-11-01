@@ -19,13 +19,13 @@
     .nav-item-btn.active { color: #0d6efd; font-weight: 600; }
     .nav-item-btn i { font-size: 1.2rem; display: block; margin-bottom: 2px; }
     .btn-finger { width: 55px; height: 55px; border-radius: 50%; background: #0d6efd; color: #fff; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; border: 3px solid #fff; box-shadow: 0 4px 12px rgba(13,110,253,0.35); margin: 0 auto; }
-    #cameraView, #cameraViewEvent { width: 100%; max-width: 300px; border-radius: 15px; transform: scaleX(-1); background-color: #000; }
-    .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    #cameraView, #cameraViewEvent { width: 100%; max-width: 300px; border-radius: 15px; transform: scaleX(-1); background-color: #000; display: block; margin: 0 auto; }
+    .top-exit-btn { position: fixed; top: 15px; right: 15px; z-index: 1050; border-radius: 50px; font-size: 0.85rem; padding: 6px 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
   </style>
 </head>
 <body>
 
-  <!-- TOAST CONTAINER -->
+  <!-- TOAST NOTIFICATION -->
   <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000">
     <div id="liveToast" class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
       <div class="d-flex">
@@ -35,7 +35,7 @@
     </div>
   </div>
 
-  <!-- HALAMAN LOGIN -->
+  <!-- LOGIN PAGE -->
   <div id="loginPage" class="container py-5">
     <div class="row justify-content-center">
       <div class="col-12 col-md-5">
@@ -62,19 +62,13 @@
 
   <!-- CONTAINER UTAMA -->
   <div id="appPages" style="display: none;">
-    
-    <!-- TOP BAR DENGAN TOMBOL EXIT DI KANAN ATAS -->
-    <div class="container pt-3">
-      <div class="top-header">
-        <h5 class="fw-bold text-primary mb-0"><i class="bi bi-shield-check"></i> Absensi App</h5>
-        <button class="btn btn-outline-danger btn-sm px-3 fw-semibold" onclick="logout()">
-          <i class="bi bi-box-arrow-right"></i> Exit
-        </button>
-      </div>
-    </div>
+    <!-- TOMBOL EXIT POJOK KANAN ATAS -->
+    <button class="btn btn-danger top-exit-btn" onclick="logout()">
+      <i class="bi bi-box-arrow-right"></i> Exit
+    </button>
 
     <!-- HOME PAGE -->
-    <div id="pageHome" class="container py-2">
+    <div id="pageHome" class="container py-3">
       <div class="card p-3 mb-3 text-center">
         <h5 id="userName" class="fw-bold mb-0">-</h5>
         <small id="userUnit" class="text-muted">-</small>
@@ -107,7 +101,7 @@
     </div>
 
     <!-- REKAP PAGE -->
-    <div id="pageRekap" class="container py-2" style="display:none;">
+    <div id="pageRekap" class="container py-3" style="display:none;">
       <h5 class="fw-bold mb-3"><i class="bi bi-calendar-check"></i> Rekap Presensi</h5>
       <div class="card p-3">
         <div class="table-responsive">
@@ -126,32 +120,17 @@
     </div>
 
     <!-- EVENT PAGE -->
-    <div id="pageEvent" class="container py-2" style="display:none;">
+    <div id="pageEvent" class="container py-3" style="display:none;">
       <h5 class="fw-bold mb-3"><i class="bi bi-calendar-event"></i> Absensi Event</h5>
       <div class="card p-3 mb-3">
         <label for="eventSelect" class="form-label fw-semibold">Pilih Event Aktif</label>
-        <select class="form-select mb-3" id="eventSelect" onchange="onEventChange()"></select>
-        
-        <!-- Jadwal Event & Timestamp Kehadiran di Bawahnya -->
-        <div id="eventDetailContainer" class="mb-3 p-3 bg-light rounded-3 border" style="display:none;">
-          <small class="text-muted d-block">Jadwal Tanggal Event:</small>
-          <strong id="eventScheduleDate" class="text-dark">-</strong>
-          
-          <div id="eventAttendanceStatus" class="mt-2 pt-2 border-top" style="display:none;">
-            <small class="text-success fw-bold d-block"><i class="bi bi-check-circle-fill"></i> Hadir pada:</small>
-            <span id="eventAttendanceTimestamp" class="badge bg-success fs-6 font-monospace">-</span>
-            <div class="mt-1">
-              <a id="eventPhotoLink" href="#" target="_blank" class="small text-decoration-none"><i class="bi bi-image"></i> Lihat Foto Absen</a>
-            </div>
-          </div>
-        </div>
-
-        <button id="btnOpenEventModal" class="btn btn-success w-100" onclick="openEventModal()"><i class="bi bi-camera"></i> Ambil Selfie & Absen Event</button>
+        <select class="form-select mb-3" id="eventSelect"></select>
+        <button class="btn btn-success w-100" onclick="openEventModal()"><i class="bi bi-camera"></i> Ambil Foto & Absen Event</button>
       </div>
     </div>
 
     <!-- SETTINGS PAGE -->
-    <div id="pageSettings" class="container py-2" style="display:none;">
+    <div id="pageSettings" class="container py-3" style="display:none;">
       <h5 class="fw-bold mb-3"><i class="bi bi-gear"></i> Pengaturan Akun</h5>
       <div class="card p-3">
         <h6>Ubah Password</h6>
@@ -177,13 +156,13 @@
       </div>
     </div>
 
-    <!-- BOTTOM NAVBAR (Tombol Sidik Jari di Center / Tengah) -->
+    <!-- BOTTOM NAVBAR (Tombol Sidik Jari di Tengah) -->
     <div class="bottom-nav">
       <button class="nav-item-btn active" id="navHome" onclick="switchTab('home')"><i class="bi bi-house-door"></i>Home</button>
       <button class="nav-item-btn" id="navRekap" onclick="switchTab('rekap')"><i class="bi bi-journal-text"></i>Rekap</button>
       
-      <!-- Tombol Sidik Jari di Tengah -->
-      <button class="nav-item-btn p-0" onclick="openAbsenModal()" style="flex: 0 0 auto;">
+      <!-- Tombol Sidik Jari Presensi Harian di Tengah -->
+      <button class="nav-item-btn" onclick="openAbsenModal()">
         <div class="btn-finger"><i class="bi bi-fingerprint"></i></div>
       </button>
 
@@ -220,6 +199,8 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="stopCamera()"></button>
         </div>
         <div class="modal-body text-center">
+          <!-- Tampilan waktu & tanggal hadir event dengan format dd-MM-yyyy HH:mm di bawah jadwal event -->
+          <div id="eventTimestampDisplay" class="badge bg-secondary mb-2 fs-6">Waktu: -</div>
           <video id="cameraViewEvent" autoplay playsinline></video>
           <div class="mt-3">
             <button class="btn btn-primary w-100 py-2" onclick="submitEventAbsen()"><i class="bi bi-check-circle"></i> Kirim Presensi Event</button>
@@ -238,7 +219,6 @@
     let currentLat = 0, currentLng = 0;
     let map, marker, videoStream = null;
     let lastLoadedDate = "";
-    let eventListCache = [];
 
     function showToast(message, isSuccess = true) {
       const toastEl = document.getElementById('liveToast');
@@ -351,9 +331,7 @@
       ['Home', 'Rekap', 'Event', 'Settings'].forEach(t => {
         document.getElementById(`page${t}`).style.display = (t.toLowerCase() === tab) ? 'block' : 'none';
       });
-      document.querySelectorAll('.bottom-nav .nav-item-btn').forEach(b => {
-        if(!b.querySelector('.btn-finger')) b.classList.remove('active');
-      });
+      document.querySelectorAll('.bottom-nav .nav-item-btn').forEach(b => b.classList.remove('active'));
       if (tab === 'home') document.getElementById('navHome').classList.add('active');
       if (tab === 'rekap') { document.getElementById('navRekap').classList.add('active'); loadRekap(); }
       if (tab === 'event') { document.getElementById('navEvent').classList.add('active'); loadEventList(); }
@@ -378,40 +356,16 @@
     async function loadEventList() {
       const res = await apiPost({ action: "getEventList", nik: localStorage.getItem("user_nik") });
       if (res.success) {
-        eventListCache = res.events;
         const select = document.getElementById("eventSelect");
         select.innerHTML = "";
-        if (eventListCache.length === 0) {
+        if (res.events.length === 0) {
           select.innerHTML = `<option value="">Tidak ada event aktif</option>`;
-          document.getElementById("eventDetailContainer").style.display = "none";
         } else {
-          eventListCache.forEach(ev => {
-            select.innerHTML += `<option value="${ev.id}">${ev.namaEvent}</option>`;
+          res.events.forEach(ev => {
+            let statusLabel = ev.alreadyAttended ? " [Sudah Absen]" : "";
+            select.innerHTML += `<option value="${ev.id}">${ev.namaEvent} (Tgl: ${ev.tanggal})${statusLabel}</option>`;
           });
-          onEventChange();
         }
-      }
-    }
-
-    function onEventChange() {
-      const selectedId = document.getElementById("eventSelect").value;
-      const ev = eventListCache.find(e => String(e.id) === String(selectedId));
-      if (!ev) return;
-
-      document.getElementById("eventDetailContainer").style.display = "block";
-      document.getElementById("eventScheduleDate").innerText = ev.tanggal;
-
-      const attStatus = document.getElementById("eventAttendanceStatus");
-      const btnModal = document.getElementById("btnOpenEventModal");
-
-      if (ev.sudahAbsen) {
-        attStatus.style.display = "block";
-        document.getElementById("eventAttendanceTimestamp").innerText = ev.waktuHadir;
-        document.getElementById("eventPhotoLink").href = ev.fotoUrl || "#";
-        btnModal.style.display = "none"; // Sembunyikan tombol absen jika sudah tercatat
-      } else {
-        attStatus.style.display = "none";
-        btnModal.style.display = "block";
       }
     }
 
@@ -423,8 +377,22 @@
     function openEventModal() {
       const eventId = document.getElementById("eventSelect").value;
       if (!eventId) return showToast("Pilih event terlebih dahulu!", false);
+      
       new bootstrap.Modal(document.getElementById('eventModal')).show();
       startCamera("cameraViewEvent");
+
+      // Menampilkan pola string waktu saat ini format dd-MM-yyyy HH:mm
+      updateEventTimestampDisplay();
+    }
+
+    function updateEventTimestampDisplay() {
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, '0');
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const yyyy = now.getFullYear();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById("eventTimestampDisplay").innerText = `Waktu Hadir: ${dd}-${mm}-${yyyy} ${hh}:${min}`;
     }
 
     function startCamera(elementId) {
@@ -474,6 +442,8 @@
     async function submitEventAbsen() {
       if (currentLat === 0 && currentLng === 0) return showToast("GPS belum terdeteksi!", false);
       const eventId = document.getElementById("eventSelect").value;
+      if (!eventId) return showToast("Pilih event dengan benar!", false);
+      
       const base64Img = captureImage("cameraViewEvent");
 
       const res = await apiPost({
@@ -487,7 +457,7 @@
       if (res.success) {
         stopCamera();
         bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
-        loadEventList(); // Refresh data event untuk memunculkan timestamp
+        loadEventList();
       }
     }
 
