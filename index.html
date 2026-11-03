@@ -15,13 +15,11 @@
     #clock { font-size: 2.8rem; font-weight: 700; color: #0d6efd; letter-spacing: 1px; }
     #map { height: 180px; border-radius: 12px; margin-top: 10px; z-index: 1; }
     
-    /* Bottom Navbar Layout Center Button */
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; border-top: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; z-index: 1000; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; border-top: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; z-index: 1000; }
     .nav-item-btn { text-align: center; color: #6c757d; font-size: 0.72rem; border: none; background: none; flex: 1; }
     .nav-item-btn.active { color: #0d6efd; font-weight: 600; }
     .nav-item-btn i { font-size: 1.25rem; display: block; margin-bottom: 2px; }
     
-    /* Fingerprint Center Button */
     .btn-finger-container { flex: 1; text-align: center; position: relative; }
     .btn-finger { width: 58px; height: 58px; border-radius: 50%; background: #0d6efd; color: #fff; font-size: 1.7rem; display: flex; align-items: center; justify-content: center; border: 4px solid #fff; box-shadow: 0 4px 12px rgba(13,110,253,0.35); margin: -25px auto 0 auto; cursor: pointer; }
     
@@ -65,7 +63,7 @@
     </div>
   </div>
 
-  <!-- CONTAINER UTAMA APLIKASI -->
+  <!-- CONTAINER UTAMA -->
   <div id="appPages" style="display: none;">
     <!-- HOME PAGE -->
     <div id="pageHome" class="container py-3">
@@ -100,9 +98,30 @@
       </div>
     </div>
 
-    <!-- REKAP PRESENSI PAGE -->
+    <!-- REKAP PRESENSI PAGE (DENGAN FILTER RENTANG TANGGAL) -->
     <div id="pageRekap" class="container py-3" style="display:none;">
       <h5 class="fw-bold mb-3"><i class="bi bi-calendar-check"></i> Rekap Presensi</h5>
+      
+      <!-- Filter Card -->
+      <div class="card p-3 mb-3">
+        <h6 class="fw-bold text-secondary mb-2"><i class="bi bi-filter"></i> Filter Rentang Tanggal</h6>
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label small text-muted mb-1">Dari Tanggal</label>
+            <input type="date" class="form-control form-control-sm" id="filterStart">
+          </div>
+          <div class="col-6">
+            <label class="form-label small text-muted mb-1">Sampai Tanggal</label>
+            <input type="date" class="form-control form-control-sm" id="filterEnd">
+          </div>
+        </div>
+        <div class="mt-2 d-flex gap-2">
+          <button class="btn btn-sm btn-primary w-100" onclick="loadRekap()"><i class="bi bi-search"></i> Tampilkan</button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="resetFilterRekap()"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+        </div>
+      </div>
+
+      <!-- Tabel Hasil Rekap -->
       <div class="card p-3">
         <div class="table-responsive">
           <table class="table table-hover align-middle">
@@ -159,7 +178,7 @@
       </div>
     </div>
 
-    <!-- BOTTOM NAVBAR (SIDIK JARI DI CENTER PERSI) -->
+    <!-- BOTTOM NAVBAR -->
     <div class="bottom-nav">
       <button class="nav-item-btn active" id="navHome" onclick="switchTab('home')">
         <i class="bi bi-house-door"></i> Home
@@ -168,7 +187,6 @@
         <i class="bi bi-journal-text"></i> Rekap
       </button>
       
-      <!-- FINGERPRINT BUTTON CENTERED -->
       <div class="btn-finger-container">
         <div class="btn-finger" onclick="openAbsenModal()"><i class="bi bi-fingerprint"></i></div>
       </div>
@@ -182,7 +200,7 @@
     </div>
   </div>
 
-  <!-- MODAL ABSENSI UTAMA (SELFIE) -->
+  <!-- MODAL ABSENSI HARIAN -->
   <div class="modal fade" id="absenModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -201,7 +219,7 @@
     </div>
   </div>
 
-  <!-- MODAL ABSENSI EVENT (SELFIE) -->
+  <!-- MODAL ABSENSI EVENT -->
   <div class="modal fade" id="eventModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -364,11 +382,37 @@
       if (tab === 'settings') document.getElementById('navSettings').classList.add('active');
     }
 
+    // Fungsi konversi format input date (yyyy-mm-dd) ke format sheet (dd-mm-yyyy)
+    function formatDateToDMY(dateString) {
+      if (!dateString) return "";
+      const parts = dateString.split("-");
+      if (parts.length !== 3) return "";
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+
     async function loadRekap() {
-      const res = await apiPost({ action: "getRekap", nik: localStorage.getItem("user_nik") });
+      const rawStart = document.getElementById("filterStart").value;
+      const rawEnd = document.getElementById("filterEnd").value;
+      
+      const startDate = formatDateToDMY(rawStart);
+      const endDate = formatDateToDMY(rawEnd);
+
+      const res = await apiPost({ 
+        action: "getRekap", 
+        nik: localStorage.getItem("user_nik"),
+        startDate: startDate,
+        endDate: endDate
+      });
+
       if (res.success) {
         const tbody = document.getElementById("rekapTableBody");
         tbody.innerHTML = "";
+        
+        if (res.rekap.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted py-3">Tidak ada data rekap presensi.</td></tr>`;
+          return;
+        }
+
         res.rekap.forEach(r => {
           tbody.innerHTML += `<tr>
             <td>${r.tanggal}</td>
@@ -377,6 +421,12 @@
           </tr>`;
         });
       }
+    }
+
+    function resetFilterRekap() {
+      document.getElementById("filterStart").value = "";
+      document.getElementById("filterEnd").value = "";
+      loadRekap();
     }
 
     async function loadEventList() {
@@ -488,7 +538,7 @@
             <p class="mb-1"><strong>Tanggal:</strong> ${att.tanggal}</p>
             <p class="mb-1"><strong>Jam:</strong> ${att.jam}</p>
             <p class="mb-1"><strong>Koordinat:</strong> ${att.koordinat}</p>
-            <a href="${att.pdfUrl}" target="_blank" class="btn btn-sm btn-outline-danger mt-2"><i class="bi bi-file-earmark-pdf"></i> Lihat Foto PDF di Drive</a>
+            <a href="${att.fileUrl}" target="_blank" class="btn btn-sm btn-outline-primary mt-2"><i class="bi bi-image"></i> Lihat Foto Absen di Drive</a>
           </div>
         `;
       }
