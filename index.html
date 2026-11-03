@@ -43,10 +43,10 @@
     <div class="row justify-content-center">
       <div class="col-12 col-md-5">
         <div class="card p-4 text-center">
-          <h3 class="fw-bold mb-4 text-primary"><i class="bi bi-person-badge"></i> SINONÁ</h3>
+          <h3 class="fw-bold mb-4 text-primary"><i class="bi bi-person-badge"></i> Absensi & Event</h3>
           <div class="form-floating mb-3 text-start">
             <input type="text" class="form-control" id="loginNik" placeholder="16 Digit NIK" maxlength="16" inputmode="numeric">
-            <label for="loginNik">NIK</label>
+            <label for="loginNik">NIK (16 Teks Angka)</label>
           </div>
           <div class="input-group mb-3">
             <div class="form-floating flex-grow-1 text-start">
@@ -98,11 +98,11 @@
       </div>
     </div>
 
-    <!-- REKAP PRESENSI PAGE (DENGAN FILTER RENTANG TANGGAL) -->
+    <!-- REKAP PRESENSI PAGE -->
     <div id="pageRekap" class="container py-3" style="display:none;">
       <h5 class="fw-bold mb-3"><i class="bi bi-calendar-check"></i> Rekap Presensi</h5>
       
-      <!-- Filter Card -->
+      <!-- Filter Tanggal -->
       <div class="card p-3 mb-3">
         <h6 class="fw-bold text-secondary mb-2"><i class="bi bi-filter"></i> Filter Rentang Tanggal</h6>
         <div class="row g-2">
@@ -121,7 +121,7 @@
         </div>
       </div>
 
-      <!-- Tabel Hasil Rekap -->
+      <!-- Tabel Rekap -->
       <div class="card p-3">
         <div class="table-responsive">
           <table class="table table-hover align-middle">
@@ -145,7 +145,7 @@
       <div id="eventAttendanceResult" class="mt-3"></div>
     </div>
 
-    <!-- SETTINGS PAGE (TERMASUK KELUAR) -->
+    <!-- SETTINGS PAGE -->
     <div id="pageSettings" class="container py-3" style="display:none;">
       <h5 class="fw-bold mb-3"><i class="bi bi-gear"></i> Pengaturan Akun</h5>
       <div class="card p-3 mb-3">
@@ -210,6 +210,7 @@
         </div>
         <div class="modal-body text-center">
           <video id="cameraView" autoplay playsinline></video>
+          <canvas id="canvasHarian" style="display:none;"></canvas>
           <div class="mt-3 d-flex justify-content-center gap-2">
             <button class="btn btn-success w-50 py-2" onclick="doAbsen('masuk')"><i class="bi bi-box-arrow-in-right"></i> Jam Masuk</button>
             <button class="btn btn-danger w-50 py-2" onclick="doAbsen('pulang')"><i class="bi bi-box-arrow-right"></i> Jam Pulang</button>
@@ -229,7 +230,7 @@
         </div>
         <div class="modal-body text-center">
           <video id="eventCameraView" autoplay playsinline></video>
-          <canvas id="canvas" style="display:none;"></canvas>
+          <canvas id="canvasEvent" style="display:none;"></canvas>
           <div class="mt-3">
             <button class="btn btn-primary w-100 py-2" onclick="submitEventAbsen()"><i class="bi bi-check-circle"></i> Kirim Presensi Event</button>
           </div>
@@ -382,7 +383,6 @@
       if (tab === 'settings') document.getElementById('navSettings').classList.add('active');
     }
 
-    // Fungsi konversi format input date (yyyy-mm-dd) ke format sheet (dd-mm-yyyy)
     function formatDateToDMY(dateString) {
       if (!dateString) return "";
       const parts = dateString.split("-");
@@ -435,7 +435,7 @@
       container.innerHTML = "";
 
       if (!res.success || res.events.length === 0) {
-        container.innerHTML = `<div class="card p-3 text-center text-muted">Tidak ada jadwal event untuk Nama Anda saat ini.</div>`;
+        container.innerHTML = `<div class="card p-3 text-center text-muted">Tidak ada jadwal event untuk NIK Anda saat ini.</div>`;
         return;
       }
 
@@ -481,17 +481,30 @@
       }
     }
 
+    function captureImage(videoId, canvasId) {
+      const video = document.getElementById(videoId);
+      const canvas = document.getElementById(canvasId);
+      canvas.width = video.videoWidth || 320;
+      canvas.height = video.videoHeight || 240;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/jpeg");
+    }
+
     async function doAbsen(type) {
       if (currentLat === 0 && currentLng === 0) {
         return showToast("Lokasi GPS belum terdeteksi!", "error");
       }
+
+      const imageBase64 = captureImage("cameraView", "canvasHarian");
 
       const res = await apiPost({
         action: "absen",
         nik: localStorage.getItem("user_nik"),
         type: type,
         lat: currentLat,
-        lng: currentLng
+        lng: currentLng,
+        image: imageBase64
       });
 
       showToast(res.message, res.success ? "success" : "error");
@@ -507,13 +520,7 @@
         return showToast("Lokasi GPS belum terdeteksi!", "error");
       }
 
-      const video = document.getElementById("eventCameraView");
-      const canvas = document.getElementById("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageBase64 = canvas.toDataURL("image/jpeg");
+      const imageBase64 = captureImage("eventCameraView", "canvasEvent");
 
       const res = await apiPost({
         action: "absenEvent",
