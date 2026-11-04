@@ -23,7 +23,7 @@
     .btn-finger-container { flex: 1; text-align: center; position: relative; }
     .btn-finger { width: 58px; height: 58px; border-radius: 50%; background: #0d6efd; color: #fff; font-size: 1.7rem; display: flex; align-items: center; justify-content: center; border: 4px solid #fff; box-shadow: 0 4px 12px rgba(13,110,253,0.35); margin: -25px auto 0 auto; cursor: pointer; }
     
-    #cameraView, #eventCameraView { width: 100%; max-width: 320px; border-radius: 15px; transform: scaleX(-1); background-color: #000; }
+    #cameraView, #CameraView { width: 100%; max-width: 320px; border-radius: 15px; transform: scaleX(-1); background-color: #000; }
   </style>
 </head>
 <body>
@@ -141,6 +141,16 @@
     <!-- EVENT PRESENSI PAGE -->
     <div id="pageEvent" class="container py-3" style="display:none;">
       <h5 class="fw-bold mb-3"><i class="bi bi-calendar-event"></i> Presensi Event</h5>
+
+      <!-- Filter / Pilihan Tanggal Event -->
+      <div class="card p-3 mb-3">
+        <label class="form-label small text-muted mb-1 fw-bold">Pilih Tanggal Event</label>
+        <div class="input-group input-group-sm">
+          <input type="date" class="form-control" id="selectedEventDate" onchange="loadEventList()">
+          <button class="btn btn-outline-secondary" type="button" onclick="resetEventDate()"><i class="bi bi-arrow-counterclockwise"></i> Semua</button>
+        </div>
+      </div>
+      
       <div id="eventListContainer"></div>
       <div id="eventAttendanceResult" class="mt-3"></div>
     </div>
@@ -439,9 +449,25 @@
         return;
       }
 
-      res.events.forEach(ev => {
+      // Konversi input date (yyyy-mm-dd) ke format sheet (dd-mm-yyyy) jika ada pilihan
+      let filterDateDMY = "";
+      if (selectedDateRaw) {
+        const parts = selectedDateRaw.split("-");
+        filterDateDMY = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+
+      let filteredEvents = res.events;
+      if (filterDateDMY) {
+        filteredEvents = res.events.filter(ev => ev.tanggal === filterDateDMY);
+      }
+
+      if (filteredEvents.length === 0) {
+        container.innerHTML = `<div class="card p-3 text-center text-muted">Tidak ada event pada tanggal yang dipilih.</div>`;
+        return;
+      }
+     filteredEvents.forEach(ev => {
         container.innerHTML += `
-          <div class="card p-3 mb-3">
+          <div class="card p-3 mb-3 border-start border-4 border-primary">
             <h5 class="fw-bold text-primary">${ev.namaEvent}</h5>
             <small class="text-muted"><i class="bi bi-calendar"></i> Tanggal: ${ev.tanggal}</small><br>
             <small class="text-muted"><i class="bi bi-geo-alt"></i> Radius Maksimal: ${ev.radius} Meter</small>
@@ -451,6 +477,11 @@
           </div>
         `;
       });
+    }
+
+    function resetEventDate() {
+      document.getElementById("selectedEventDate").value = "";
+      loadEventList();
     }
 
     function openAbsenModal() {
